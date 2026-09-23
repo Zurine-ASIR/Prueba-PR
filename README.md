@@ -1,2 +1,2 @@
 # Prueba-PR
-Actions
+GitHub Actions
