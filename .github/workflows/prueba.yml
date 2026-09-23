@@ -2,20 +2,22 @@ name: Prueba secrets self-hosted
 
 on:
   push:
-    branches: [ '**' ]
+    branches: ['**']
 
 jobs:
   comparar-tokens:
     runs-on: self-hosted
+
     steps:
       - name: Comparar DEV_TOKEN con LOCAL_DEV_TOKEN
-        shell: bash
+        shell: powershell
         env:
           DEV_TOKEN: ${{ secrets.DEV_TOKEN }}
         run: |
-          if [ "$DEV_TOKEN" = "$LOCAL_DEV_TOKEN" ]; then
-            echo 'OK - Los tokens COINCIDEN'
-          else
-            echo 'FAIL - Los tokens NO coinciden'
+          if ($env:DEV_TOKEN -eq $env:LOCAL_DEV_TOKEN) {
+            Write-Host "OK - Los tokens COINCIDEN"
+          }
+          else {
+            Write-Host "FAIL - Los tokens NO coinciden"
             exit 1
-          fi
+          }
