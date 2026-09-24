@@ -1,0 +1,49 @@
+name: CD - main
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  actualizar-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Incrementar version en README.md
+        shell: bash
+        run: |
+          FECHA=$(date '+%Y-%m-%d %H:%M:%S')
+          ACTUAL=$(grep -oP 'AppVersion-\K[0-9]+' README.md || echo 0)
+          NUEVA=$((ACTUAL + 1))
+          sed -i "s/AppVersion-[0-9]*/AppVersion-$NUEVA/" README.md
+          echo "Version actualizada a AppVersion-$NUEVA el $FECHA" >> README.md
+
+      - name: Commit y push del README
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add README.md
+          git commit -m "Incrementa version a AppVersion-$NUEVA" || echo "Sin cambios"
+          git push
+
+  validar-secret:
+    needs: actualizar-version
+    runs-on: self-hosted
+    steps:
+      - name: Comparar PROD_TOKEN con LOCAL_PROD_TOKEN
+        shell: powershell
+        env:
+          PROD_TOKEN: ${{ secrets.PROD_TOKEN }}
+        run: |
+          if ($env:PROD_TOKEN -eq $env:LOCAL_PROD_TOKEN) {
+            Write-Host "OK - Los tokens COINCIDEN"
+          } else {
+            Write-Host "FAIL - Los tokens NO coinciden"
+            exit 1
+          }
